@@ -1,13 +1,21 @@
-'use strict';
-require('dotenv').config()
+"use strict";
+require("dotenv").config();
 
 // eslint-disable-next-line import/no-unresolved
-const express = require('express');
-var cors = require('cors')
+const express = require("express");
+var cors = require("cors");
 var logger = require("morgan");
 
 const app = express();
-app.use(cors())
+app.use(cors());
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
 app.use(logger("dev"));
 
 var indexRouter = require("./routes/index");
@@ -16,12 +24,10 @@ var indexRouter = require("./routes/index");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.listen(8000, '127.0.0.1');
-
+app.listen(8000, "127.0.0.1");
 
 app.use("/", indexRouter);
 // app.use('/users', usersRouter);
 // app.use("/auth", authRouter);
-
 
 module.exports = app;
