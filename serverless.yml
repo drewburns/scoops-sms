@@ -1,7 +1,0 @@
-org: andrewburns
-app: sms-api
-component: express
-name: sms-api
-
-inputs:
-  src: ./
