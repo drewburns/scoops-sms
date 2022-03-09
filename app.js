@@ -7,15 +7,15 @@ var cors = require("cors");
 var logger = require("morgan");
 
 const app = express();
-app.use(cors());
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
+app.use(
+  cors({
+    allowedHeaders: ["authorization", "Content-Type"], // you can change the headers
+    exposedHeaders: ["authorization"], // you can change the headers
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    preflightContinue: false,
+  })
+);
 app.use(logger("dev"));
 
 var indexRouter = require("./routes/index");
