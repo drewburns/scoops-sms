@@ -22,7 +22,7 @@ var indexRouter = require("./routes/index");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.listen(8000, "127.0.0.1");
+app.listen(8000);
 
 app.use("/", indexRouter);
 // app.use('/users', usersRouter);
