@@ -23,36 +23,47 @@ router.post("/cancel", async function (req, res, next) {
     }
   }
   console.log(activeSubscriptions);
-  const subs_to_cancel = activeSubscriptions.filter(
-    (s) => s.customer.phone === phone.replace(/\D/g, "").slice(-10)
-  ).map(sub => sub.customer.id);
+  const subs_to_cancel = activeSubscriptions
+    .filter((s) => s.customer.phone === phone.replace(/\D/g, "").slice(-10))
+    .map((sub) => sub.customer.id);
   console.log(subs_to_cancel);
 });
 
 router.post("/free_sign_up", async function (req, res, next) {
-  const { phone, name } = req.body;
+  const { phone, name, email } = req.body;
   const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
   const customer = await stripe.customers.create({
     name,
-    phone,
+    ...(phone && { phone }),
+    ...(email && { email }),
   });
 
-  await sendMessage(
-    "Thank you for signing up for Market Scoops Basic!",
-    [phone],
-    new Date()
-  );
+  if (email) {
+    await sendEmail(
+      "Thank you for signing up for Market Scoops Basic!",
+      [email],
+      new Date()
+    );
+  } else {
+    await sendMessage(
+      "Thank you for signing up for Market Scoops Basic!",
+      [phone],
+      new Date()
+    );
+  }
+
   res.json("OK");
 });
 
 router.post("/start_sub", async function (req, res, next) {
-  const { phone, name, source, promoCode } = req.body;
+  const { phone, name, source, promoCode, email } = req.body;
   const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
   const customer = await stripe.customers.create({
     name,
-    phone,
+    ...(phone && { phone }),
+    ...(email && { email }),
   });
 
   const card = await stripe.customers.createSource(customer.id, { source });
@@ -63,13 +74,13 @@ router.post("/start_sub", async function (req, res, next) {
     items: [
       { price: process.env.STRIPE_PRICE_ID }, // REPLACE
     ],
-    ...(promo_code && { promotion_code: promo_code.id }),
+    ...(promo_code.data.length !== 0 && { promotion_code: promo_code.id }),
   });
-  await sendMessage(
-    "Thank you for signing up for Market Scoops Premium! Your payment has been processed",
-    [phone],
-    new Date()
-  );
+  if (email) {
+    await sendEmail(welcomeMessage, [email], new Date());
+  } else {
+    await sendMessage(welcomeMessage, [phone], new Date());
+  }
   res.json("OK");
 });
 
@@ -117,21 +128,55 @@ router.post("/send_message", async function (req, res, next) {
     .filter((r) => subCustomerIds.includes(r.id))
     .map((a) => a.phone);
 
-  const freeUsers = allCustomerPhones.filter(
-    (d) => !subCustomerPhones.includes(d)
-  );
+  // const freeUsers = allCustomerPhones.filter(
+  //   (d) => !subCustomerPhones.includes(d)
+  // );
 
   console.log("allPhones", allCustomerPhones);
   console.log("subCustomerPhones", subCustomerPhones);
-  console.log("freePhones", freeUsers);
 
   await sendMessage(
     body,
     type === "all" ? allCustomerPhones : subCustomerPhones,
     date
   );
+
+  const allCustomerEmails = customers.map((r) => r.email);
+  const subCustomerEmails = customers
+    .filter((r) => subCustomerIds.includes(r.id))
+    .map((a) => a.email);
+
+  // const freeUsers = allCustomerPhones.filter(
+  //   (d) => !subCustomerPhones.includes(d)
+  // );
+
+  console.log("allEMails", allCustomerEmails);
+  console.log("subEmails", subCustomerEmails);
+
+  await sendEmail(
+    body,
+    type === "all" ? allCustomerEmails : subCustomerEmails,
+    date
+  );
   res.json("OK");
 });
+
+const sendEmail = async (body, emails, date) => {
+  const uniqEmails = [...new Set(emails)];
+  const sendAt = date.getTime();
+  const sgMail = require("@sendgrid/mail");
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  for (i = 0; i < uniqEmails.length; i++) {
+    const msg = {
+      to: uniqEmails[i], // Change to your recipient
+      from: "contact@marketscoop.io", // Change to your verified sender
+      subject: "Your Daily Market Scoop",
+      text: body,
+      send_at: sendAt,
+    };
+    await sgMail.send(msg);
+  }
+};
 
 const sendMessage = async (body, userNumbers, date) => {
   const uniqNumbers = [...new Set(userNumbers)];
@@ -163,4 +208,19 @@ const sendMessage = async (body, userNumbers, date) => {
   }
 };
 
+const welcomeMessage = `Welcome to The Market Scoop! Here’s what you can expect from us.
+
+Monday - A look at the week ahead, including trending sectors, earning reports that week, federal reserve meeting times, companies in focus, and headline stock news that day.
+
+Tuesday - Major news announcements on stocks, and the Scoops buy of the week. (We like to wait for Tuesday, after collecting data Monday on the market)
+
+Wednesday - Continued major news announcements on stocks along with updates on crypto currency, and a quote of the week hand-picked by our team.
+
+Thursday - Breaking announcements on stocks and all things market related, as well as trending penny stocks.
+
+Friday - Announcements of news on all stocks, and a weekly wrap up, including outlook for the weekend, and an update on the Scoops buy of the week.
+
+We hope you love us!
+
+ANY RECOMMENDATIONS/CONCERNS: Please email contact@marketscoop.io`;
 module.exports = router;
