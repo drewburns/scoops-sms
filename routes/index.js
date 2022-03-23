@@ -172,7 +172,7 @@ const sendEmail = async (body, emails, date) => {
       from: "contact@marketscoop.io", // Change to your verified sender
       subject: "Your Daily Market Scoop",
       text: body,
-      send_at: sendAt,
+      // send_at: sendAt,
     };
     await sgMail.send(msg);
   }
