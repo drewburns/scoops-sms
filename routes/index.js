@@ -40,17 +40,9 @@ router.post("/free_sign_up", async function (req, res, next) {
   });
 
   if (email) {
-    await sendEmail(
-      "Thank you for signing up for Market Scoops Basic!",
-      [email],
-      new Date()
-    );
+    await sendEmail(freeMessage, [email], new Date());
   } else {
-    await sendMessage(
-      "Thank you for signing up for Market Scoops Basic!",
-      [phone],
-      new Date()
-    );
+    await sendMessage(freeMessage, [phone], new Date());
   }
 
   res.json("OK");
@@ -223,4 +215,9 @@ Friday - Announcements of news on all stocks, and a weekly wrap up, including ou
 We hope you love us!
 
 ANY RECOMMENDATIONS/CONCERNS: Please email contact@marketscoop.io`;
+
+const freeMessage = `Welcome to The Market Scoop! With the basic plan, you will receive one message every monday; including news announcements on the biggest stocks, earnings for the week ahead, federal reserve meeting times, important reports on economic data, along with that week’s sector in focus and their respective companies. 
+
+We hope you enjoy our service, and if you would like to receive daily messages, upgrade here FREE for your first month with code: ‘basic2member’
+`;
 module.exports = router;
