@@ -136,7 +136,7 @@ router.post("/send_message", async function (req, res, next) {
   } else {
     phonesToSendTo = subCustomerPhones
   }
-  
+
   await sendMessage(
     body,
     phonesToSendTo,
@@ -183,9 +183,11 @@ const sendEmail = async (title = "Your Daily Market Scoop", body, emails, date) 
       from: "contact@marketscoop.io", // Change to your verified sender
       subject: title,
       text: body,
-      // send_at: sendAt,
     };
-    await sgMail.send(msg);
+    console.log('msg', msg)
+    await sgMail.send(msg)
+    // sgMail.send(msg).then(res => console.log("res", res)).catch(err => console.log("err", err.response.body));
+    // console.log("sent email",uniqEmails[i] )
   }
 };
 
