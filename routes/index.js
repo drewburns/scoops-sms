@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 
-router.get("/", async function (req, res, next) {});
+router.get("/", async function (req, res, next) { });
 
 router.post("/cancel", async function (req, res, next) {
   const { phone } = req.body;
@@ -30,17 +30,18 @@ router.post("/cancel", async function (req, res, next) {
 });
 
 router.post("/free_sign_up", async function (req, res, next) {
-  const { phone, name, email } = req.body;
+  const { phone, name, email, messageType } = req.body;
   const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
   const customer = await stripe.customers.create({
     name,
     ...(phone && { phone }),
     ...(email && { email }),
+    metadata: { 'preferred': messageType }
   });
 
-  if (email) {
-    await sendEmail(freeMessage, [email], new Date());
+  if (messageType !== "text") {
+    await sendEmail("Thanks for signing up for Market Scoops!", freeMessage, [email], new Date());
   } else {
     await sendMessage(freeMessage, [phone], new Date());
   }
@@ -49,13 +50,14 @@ router.post("/free_sign_up", async function (req, res, next) {
 });
 
 router.post("/start_sub", async function (req, res, next) {
-  const { phone, name, source, promoCode, email } = req.body;
+  const { phone, name, source, promoCode, email, messageType } = req.body;
   const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
   const customer = await stripe.customers.create({
     name,
     ...(phone && { phone }),
     ...(email && { email }),
+    metadata: { 'preferred': messageType }
   });
 
   const card = await stripe.customers.createSource(customer.id, { source });
@@ -68,8 +70,8 @@ router.post("/start_sub", async function (req, res, next) {
     ],
     ...(promo_code.data.length !== 0 && { promotion_code: promo_code.id }),
   });
-  if (email) {
-    await sendEmail(welcomeMessage, [email], new Date());
+  if (messageType !== "text") {
+    await sendEmail("Thanks for subscribing to Market Scoops!", welcomeMessage, [email], new Date());
   } else {
     await sendMessage(welcomeMessage, [phone], new Date());
   }
@@ -78,8 +80,7 @@ router.post("/start_sub", async function (req, res, next) {
 
 router.post("/send_message", async function (req, res, next) {
   const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
-  const { type, body, date } = req.body;
+  const { title, type, body, date } = req.body;
 
   var lastSub = null;
   var activeSubscriptions = [];
@@ -127,9 +128,18 @@ router.post("/send_message", async function (req, res, next) {
   console.log("allPhones", allCustomerPhones);
   console.log("subCustomerPhones", subCustomerPhones);
 
+  var phonesToSendTo = []
+  if (type === "all") {
+    phonesToSendTo = allCustomerPhones
+  } else if (type === "free") {
+    phonesToSendTo = allCustomerPhones - subCustomerPhones
+  } else {
+    phonesToSendTo = subCustomerPhones
+  }
+
   await sendMessage(
     body,
-    type === "all" ? allCustomerPhones : subCustomerPhones,
+    phonesToSendTo,
     date
   );
 
@@ -145,15 +155,25 @@ router.post("/send_message", async function (req, res, next) {
   console.log("allEMails", allCustomerEmails);
   console.log("subEmails", subCustomerEmails);
 
+  var emailsToSendTo = []
+  if (type === "all") {
+    emailsToSendTo = allCustomerEmails
+  } else if (type === "free") {
+    emailsToSendTo = allCustomerEmails - subCustomerEmails
+  } else {
+    emailsToSendTo = subCustomerEmails
+  }
+
   await sendEmail(
+    title,
     body,
-    type === "all" ? allCustomerEmails : subCustomerEmails,
+    emailsToSendTo,
     date
   );
   res.json("OK");
 });
 
-const sendEmail = async (body, emails, date) => {
+const sendEmail = async (title = "Your Daily Market Scoop", body, emails, date) => {
   const uniqEmails = [...new Set(emails)];
   const sendAt = date.getTime();
   const sgMail = require("@sendgrid/mail");
@@ -162,7 +182,7 @@ const sendEmail = async (body, emails, date) => {
     const msg = {
       to: uniqEmails[i], // Change to your recipient
       from: "contact@marketscoop.io", // Change to your verified sender
-      subject: "Your Daily Market Scoop",
+      subject: title,
       text: body,
       // send_at: sendAt,
     };
