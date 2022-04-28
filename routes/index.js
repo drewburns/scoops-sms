@@ -116,10 +116,10 @@ router.post("/send_message", async function (req, res, next) {
       break;
     }
   }
-  const allCustomerPhones = customers.map((r) => r.phone);
+  const allCustomerPhones = customers.map((r) => r.phone).filter(x => x);
   const subCustomerPhones = customers
     .filter((r) => subCustomerIds.includes(r.id))
-    .map((a) => a.phone);
+    .map((a) => a.phone).filter(x => x);
 
   // const freeUsers = allCustomerPhones.filter(
   //   (d) => !subCustomerPhones.includes(d)
@@ -132,21 +132,21 @@ router.post("/send_message", async function (req, res, next) {
   if (type === "all") {
     phonesToSendTo = allCustomerPhones
   } else if (type === "free") {
-    phonesToSendTo = allCustomerPhones - subCustomerPhones
+    phonesToSendTo = allCustomerPhones.filter(x => !subCustomerPhones.includes(x));
   } else {
     phonesToSendTo = subCustomerPhones
   }
-
+  
   await sendMessage(
     body,
     phonesToSendTo,
     date
   );
 
-  const allCustomerEmails = customers.map((r) => r.email);
+  const allCustomerEmails = customers.map((r) => r.email).filter(x => x);
   const subCustomerEmails = customers
     .filter((r) => subCustomerIds.includes(r.id))
-    .map((a) => a.email);
+    .map((a) => a.email).filter(x => x);;
 
   // const freeUsers = allCustomerPhones.filter(
   //   (d) => !subCustomerPhones.includes(d)
@@ -159,7 +159,7 @@ router.post("/send_message", async function (req, res, next) {
   if (type === "all") {
     emailsToSendTo = allCustomerEmails
   } else if (type === "free") {
-    emailsToSendTo = allCustomerEmails - subCustomerEmails
+    emailsToSendTo = allCustomerEmails.filter(x => !subCustomerEmails.includes(x));
   } else {
     emailsToSendTo = subCustomerEmails
   }
@@ -175,7 +175,6 @@ router.post("/send_message", async function (req, res, next) {
 
 const sendEmail = async (title = "Your Daily Market Scoop", body, emails, date) => {
   const uniqEmails = [...new Set(emails)];
-  const sendAt = date.getTime();
   const sgMail = require("@sendgrid/mail");
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   for (i = 0; i < uniqEmails.length; i++) {
