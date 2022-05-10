@@ -49,6 +49,18 @@ router.post("/free_sign_up", async function (req, res, next) {
   res.json("OK");
 });
 
+router.get("/check_promo", async function (req, res, next) {
+  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+  const { code } = req.query;
+  const promo_codes = await stripe.promotionCodes.list({ code });
+  if (promo_codes.data.length === 0) {
+    res.status(500).json("NONE")
+    return
+  }
+  return promo_codes.data[0].coupon.name;
+});
+
+
 router.post("/start_sub", async function (req, res, next) {
   const { phone, name, source, promoCode, email, messageType } = req.body;
   const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
