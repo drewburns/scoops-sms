@@ -62,7 +62,7 @@ router.get("/check_promo", async function (req, res, next) {
     return
   }
   const coupon = promo_codes.data[0].coupon;
-  res.json(`${coupon.percent_off}% off for ${coupon.duration_in_months} ${coupon.duration_in_months === 1 ? "month" : "months"}`);
+  res.json(`${coupon.percent_off}% off first month`);
 });
 
 
