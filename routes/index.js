@@ -61,7 +61,8 @@ router.get("/check_promo", async function (req, res, next) {
     res.status(500).json("NONE")
     return
   }
-  res.json(promo_codes.data[0].coupon.name);
+  const coupon = promo_codes.data[0].coupon;
+  res.json(`${coupon.percent_off}% off for ${coupon.duration_in_months} ${coupon.duration_in_months === 1 ? "month" : "months"}`);
 });
 
 
@@ -239,19 +240,19 @@ const sendMessage = async (body, userNumbers, date) => {
 
 const welcomeMessage = `Welcome to The Market Scoop! Here’s what you can expect from us.
 
-Monday - A look at the week ahead, including trending sectors, earning reports that week, federal reserve meeting times, companies in focus, and headline stock news that day.
+  Monday - A look at the week ahead, including trending sectors, earning reports that week, federal reserve meeting times, companies in focus, and headline stock news that day.
 
-Tuesday - Major news announcements on stocks, and the Scoops buy of the week. (We like to wait for Tuesday, after collecting data Monday on the market)
+    Tuesday - Major news announcements on stocks, and the Scoops buy of the week. (We like to wait for Tuesday, after collecting data Monday on the market)
 
-Wednesday - Continued major news announcements on stocks along with updates on crypto currency, and a quote of the week hand-picked by our team.
+Wednesday - Continued major news announcements on stocks along with updates on crypto currency, and a quote of the week hand - picked by our team.
 
-Thursday - Breaking announcements on stocks and all things market related, as well as trending penny stocks.
+  Thursday - Breaking announcements on stocks and all things market related, as well as trending penny stocks.
 
-Friday - Announcements of news on all stocks, and a weekly wrap up, including outlook for the weekend, and an update on the Scoops buy of the week.
+    Friday - Announcements of news on all stocks, and a weekly wrap up, including outlook for the weekend, and an update on the Scoops buy of the week.
 
 We hope you love us!
 
-ANY RECOMMENDATIONS/CONCERNS: Please email contact@marketscoop.io`;
+ANY RECOMMENDATIONS / CONCERNS: Please email contact @marketscoop.io`;
 
 const freeMessage = `Welcome to The Market Scoop! With the basic plan, you will receive one message every monday; including news announcements on the biggest stocks, earnings for the week ahead, federal reserve meeting times, important reports on economic data, along with that week’s sector in focus and their respective companies. 
 
