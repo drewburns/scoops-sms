@@ -57,7 +57,7 @@ router.get("/check_promo", async function (req, res, next) {
     res.status(500).json("NONE")
     return
   }
-  return promo_codes.data[0].coupon.name;
+  res.json(promo_codes.data[0].coupon.name);
 });
 
 
