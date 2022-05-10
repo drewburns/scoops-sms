@@ -61,14 +61,14 @@ router.post("/start_sub", async function (req, res, next) {
   });
 
   const card = await stripe.customers.createSource(customer.id, { source });
-  const promo_code = await stripe.promotionCodes.list({ code: promoCode });
+  const promo_codes = await stripe.promotionCodes.list({ code: promoCode });
 
   const subscription = await stripe.subscriptions.create({
     customer: customer.id,
     items: [
       { price: process.env.STRIPE_PRICE_ID }, // REPLACE
     ],
-    ...(promo_code.data.length !== 0 && { promotion_code: promo_code.id }),
+    ...(promo_codes.data.length !== 0 && { promotion_code: promo_codes[0].id }),
   });
   if (messageType !== "text") {
     await sendEmail("Thanks for subscribing to Market Scoops!", welcomeMessage, [email], new Date());
