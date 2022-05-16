@@ -53,7 +53,7 @@ router.get("/check_promo", async function (req, res, next) {
   // const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
   // const { code } = req.query;
   // if (!code) {
-  //   res.status(500).json("NONE")
+  res.status(500).json("NONE")
   //   return;
   // }
   // const promo_codes = await stripe.promotionCodes.list({ code });
