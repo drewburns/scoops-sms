@@ -2,27 +2,71 @@ var express = require("express");
 var router = express.Router();
 
 router.get("/", async function (req, res, next) {
-  // const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-  // var lastCustomer = null;
-  // var customers = [];
-  // while (true) {
-  //   const response = await stripe.customers.list({
-  //     limit: 1,
-  //     ...(lastCustomer && { starting_after: lastCustomer }),
-  //   });
-  //   if (response.data.length === 0) {
-  //     break;
-  //   }
-  //   customers = customers.concat(response.data);
-  //   lastCustomer = response.data[response.data.length - 1].id;
-  //   if (!response.has_more) {
-  //     break;
-  //   }
-  // }
+  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-  // console.log("customers")
-  // res.json(customers.filter(c => !c.metadata.preferred || c.metadata.preferred === "text"));
+  var lastSub = null;
+  var activeSubscriptions = [];
+  while (true) {
+    const response = await stripe.subscriptions.list({
+      limit: 100,
+      ...(lastSub && { starting_after: lastSub }),
+    });
+    if (response.data.length === 0) {
+      break;
+    }
+    activeSubscriptions = activeSubscriptions.concat(response.data);
+    lastSub = response.data[response.data.length - 1].id;
+    if (!response.has_more) {
+      break;
+    }
+  }
+  const subCustomerIds = activeSubscriptions.map((r) => r.customer);
 
+  var lastCustomer = null;
+  var customers = [];
+  while (true) {
+    const response = await stripe.customers.list({
+      limit: 1,
+      ...(lastCustomer && { starting_after: lastCustomer }),
+    });
+    if (response.data.length === 0) {
+      break;
+    }
+    customers = customers.concat(response.data);
+    lastCustomer = response.data[response.data.length - 1].id;
+    if (!response.has_more) {
+      break;
+    }
+  }
+
+  const allCustomerPhones = customers.filter(c => !c.metadata.preferred || c.metadata.preferred === "text")
+    .map((r) => r.phone)
+    .filter(x => x);
+  const subCustomerPhones = customers
+    .filter((r) => subCustomerIds.includes(r.id))
+    .map((a) => a.phone).filter(x => x);
+
+  // const freeUsers = allCustomerPhones.filter(
+  //   (d) => !subCustomerPhones.includes(d)
+  // );
+
+  console.log("allPhones", allCustomerPhones);
+  console.log("subCustomerPhones", subCustomerPhones);
+
+
+  const allCustomerEmails = customers.filter(c => c.metadata.preferred === "email").map((r) => r.email).filter(x => x);
+  const subCustomerEmails = customers.filter(c => c.metadata.preferred === "email")
+    .filter((r) => subCustomerIds.includes(r.id))
+    .map((a) => a.email).filter(x => x);;
+
+  // const freeUsers = allCustomerPhones.filter(
+  //   (d) => !subCustomerPhones.includes(d)
+  // );
+
+  console.log("allEMails", allCustomerEmails);
+  console.log("subEmails", subCustomerEmails);
+
+  res.json(customers);
 });
 
 router.post("/cancel", async function (req, res, next) {
@@ -159,7 +203,7 @@ router.post("/send_message", async function (req, res, next) {
   const allCustomerPhones = customers.filter(c => !c.metadata.preferred || c.metadata.preferred === "text")
     .map((r) => r.phone)
     .filter(x => x);
-  const subCustomerPhones = customers
+  const subCustomerPhones = customers.filter(c => !c.metadata.preferred || c.metadata.preferred === "text")
     .filter((r) => subCustomerIds.includes(r.id))
     .map((a) => a.phone).filter(x => x);
 
@@ -186,7 +230,7 @@ router.post("/send_message", async function (req, res, next) {
   );
 
   const allCustomerEmails = customers.filter(c => c.metadata.preferred === "email").map((r) => r.email).filter(x => x);
-  const subCustomerEmails = customers
+  const subCustomerEmails = customers.filter(c => c.metadata.preferred === "email")
     .filter((r) => subCustomerIds.includes(r.id))
     .map((a) => a.email).filter(x => x);;
 
