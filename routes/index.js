@@ -1,7 +1,29 @@
 var express = require("express");
 var router = express.Router();
 
-router.get("/", async function (req, res, next) { });
+router.get("/", async function (req, res, next) {
+  // const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+  // var lastCustomer = null;
+  // var customers = [];
+  // while (true) {
+  //   const response = await stripe.customers.list({
+  //     limit: 1,
+  //     ...(lastCustomer && { starting_after: lastCustomer }),
+  //   });
+  //   if (response.data.length === 0) {
+  //     break;
+  //   }
+  //   customers = customers.concat(response.data);
+  //   lastCustomer = response.data[response.data.length - 1].id;
+  //   if (!response.has_more) {
+  //     break;
+  //   }
+  // }
+
+  // console.log("customers")
+  // res.json(customers.filter(c => !c.metadata.preferred || c.metadata.preferred === "text"));
+
+});
 
 router.post("/cancel", async function (req, res, next) {
   const { phone } = req.body;
@@ -133,7 +155,10 @@ router.post("/send_message", async function (req, res, next) {
       break;
     }
   }
-  const allCustomerPhones = customers.map((r) => r.phone).filter(x => x);
+
+  const allCustomerPhones = customers.filter(c => !c.metadata.preferred || c.metadata.preferred === "text")
+    .map((r) => r.phone)
+    .filter(x => x);
   const subCustomerPhones = customers
     .filter((r) => subCustomerIds.includes(r.id))
     .map((a) => a.phone).filter(x => x);
@@ -160,7 +185,7 @@ router.post("/send_message", async function (req, res, next) {
     date
   );
 
-  const allCustomerEmails = customers.map((r) => r.email).filter(x => x);
+  const allCustomerEmails = customers.filter(c => c.metadata.preferred === "email").map((r) => r.email).filter(x => x);
   const subCustomerEmails = customers
     .filter((r) => subCustomerIds.includes(r.id))
     .map((a) => a.email).filter(x => x);;
